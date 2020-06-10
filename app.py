@@ -4,6 +4,9 @@ import datetime as dt
 import requests
 import plotly.express as px
 import plotly.graph_objects as go
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
 
 URL = r"https://api.covid19india.org/states_daily.json"
 
@@ -83,8 +86,65 @@ def prep_data():
 
     return df_plot
 
+def createFigure(df_plot):
+    df_plot = df_plot[~pd.isnull(df_plot['weekly_cases'])]  # remove null days
+    x_max = 10 ** (int(np.log10(df_plot['total_cases'].max())) + 2)
+    y_max = 10 ** (int(np.log10(df_plot['weekly_cases'].max())) + 2)
+    fig = px.scatter(
+        data_frame=df_plot,
+        x='total_cases', y='weekly_cases',
+        size='active_cases', size_max=100,
+        color='state', hover_name='state',
+        text='state',
+        log_x=True, log_y=True,
+        template='plotly_white',
+        range_x=[100, x_max], range_y=[10, y_max],
+        title='India COVID-19 States Growth Trend<br>' + '<sub>Size of bubble indicates active cases</sub>',
+        labels={
+            'date': 'Date',
+            'state': 'State',
+            'total_cases': 'Total Cases',
+            'weekly_cases': 'New Cases in the Past Week',
+            'active_cases': 'Active Cases'
+        },
+        animation_group='state',
+        animation_frame='date',
+    )
+    fig.update_traces(textposition='top center')
+
+    """Add streaklines for each bubble in each frame"""
+    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False) for i in df_plot['state'].unique()])
+    for i, f in enumerate(fig.frames):
+        for s in df_plot['state'].unique():
+            df_data = df_plot[(df_plot['date_f'] <= df_plot['date_f'].unique()[i]) & (df_plot['state'] == s)]
+            f.data = f.data + (go.Scatter(
+                x=df_data['total_cases'], y=df_data['weekly_cases'],
+                mode='lines', legendgroup=s, name=s, showlegend=False,
+                line=dict(color='lightgrey'), opacity=0.5
+            ),)
+    annotations = []
+    doubling_time = [2, 7, 21]
+    for i in doubling_time:
+        fig.add_trace(go.Scatter(x=[100, 300000], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * 300000],
+                                 name=f'{i}-Day Doubling', mode='lines',
+                                 line=dict(dash='dot', color='grey')))
+        annotations.append(dict(x=np.log10(300000), y=np.log10((1 - 1 / 2 ** (7 / i)) * 300000),
+                                text=f'{i}-Day Doubling', showarrow=False,
+                                xshift=50, align='left'))
+
+    fig.update_layout(annotations=annotations, height=700)
+    return fig
 
 if __name__ == '__main__':
     df = prep_data()
     print(df.head())
+    imageCOVID = createFigure(df)
+    app = dash.Dash()
+    app.layout = html.Div([
+        dcc.Graph(
+            id='COVID-19-india',
+            figure=imageCOVID
+        )
+    ])
+    app.run_server(port=4055)
 
