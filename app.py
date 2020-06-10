@@ -140,6 +140,7 @@ if __name__ == '__main__':
     df = prep_data()
     fig_covid = create_figure(df)
     app = dash.Dash()
+    server = app.server
     app.layout = html.Div([
         dcc.Graph(
             id='COVID-19-india',
