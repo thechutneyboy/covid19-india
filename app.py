@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
-import requests
 import plotly.express as px
 import plotly.graph_objects as go
 import dash
@@ -86,7 +85,8 @@ def prep_data():
 
     return df_plot
 
-def createFigure(df_plot):
+
+def create_figure(df_plot):
     df_plot = df_plot[~pd.isnull(df_plot['weekly_cases'])]  # remove null days
     x_max = 10 ** (int(np.log10(df_plot['total_cases'].max())) + 2)
     y_max = 10 ** (int(np.log10(df_plot['weekly_cases'].max())) + 2)
@@ -135,16 +135,16 @@ def createFigure(df_plot):
     fig.update_layout(annotations=annotations, height=700)
     return fig
 
+
 if __name__ == '__main__':
     df = prep_data()
-    print(df.head())
-    imageCOVID = createFigure(df)
+    fig_covid = create_figure(df)
     app = dash.Dash()
     app.layout = html.Div([
         dcc.Graph(
             id='COVID-19-india',
-            figure=imageCOVID
+            figure=fig_covid
         )
     ])
-    app.run_server(port=4055)
+    app.run_server()
 
