@@ -139,7 +139,7 @@ def create_figure(df_plot):
 if __name__ == '__main__':
     df = prep_data()
     fig_covid = create_figure(df)
-    app = dash.Dash()
+    app = dash.Dash(__name__)
     server = app.server
     app.layout = html.Div([
         dcc.Graph(
