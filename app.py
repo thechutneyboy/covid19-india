@@ -112,16 +112,16 @@ def create_figure(df_plot):
     )
     fig.update_traces(textposition='top center')
 
-    """Add streaklines for each bubble in each frame"""
-    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False) for i in df_plot['state'].unique()])
-    for i, f in enumerate(fig.frames):
-        for s in df_plot['state'].unique():
-            df_data = df_plot[(df_plot['date_f'] <= df_plot['date_f'].unique()[i]) & (df_plot['state'] == s)]
-            f.data = f.data + (go.Scatter(
-                x=df_data['total_cases'], y=df_data['weekly_cases'],
-                mode='lines', legendgroup=s, name=s, showlegend=False,
-                line=dict(color='lightgrey'), opacity=0.5
-            ),)
+    # """Add streaklines for each bubble in each frame"""
+    # fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False) for i in df_plot['state'].unique()])
+    # for i, f in enumerate(fig.frames):
+    #     for s in df_plot['state'].unique():
+    #         df_data = df_plot[(df_plot['date_f'] <= df_plot['date_f'].unique()[i]) & (df_plot['state'] == s)]
+    #         f.data = f.data + (go.Scatter(
+    #             x=df_data['total_cases'], y=df_data['weekly_cases'],
+    #             mode='lines', legendgroup=s, name=s, showlegend=False,
+    #             line=dict(color='lightgrey'), opacity=0.5
+    #         ),)
     annotations = []
     doubling_time = [2, 7, 21]
     for i in doubling_time:
