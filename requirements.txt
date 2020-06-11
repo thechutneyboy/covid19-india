@@ -4,4 +4,4 @@ numpy
 plotly
 dash-core-components
 dash-html-components
-gunicorn
+gunicorn==19.9.0
