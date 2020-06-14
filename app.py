@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from functools import partial
 
 URL = r"https://api.covid19india.org/states_daily.json"
 
@@ -83,6 +84,20 @@ def prep_data():
     df_plot['state'] = df_plot['state'].map(lambda x: STATE_GLOSSARY[x])
     df_plot['date_f'] = df_plot['date'].map(lambda x: dt.datetime.strptime(x, '%d-%b-%y'))
 
+    """Streak Data"""
+    streak_total = []
+    streak_weekly = []
+    for i, row in df_plot.iterrows():
+        filter_cond = (df_plot['state'] == row['state']) & (df_plot['date_f'] <= row['date_f'])
+        streak_total.append(df_plot.loc[filter_cond, 'total_cases'].tolist())
+        streak_weekly.append(df_plot.loc[filter_cond, 'weekly_cases'].tolist())
+    df_plot = df_plot.assign(**pd.Series({'streak_total': streak_total, 'streak_weekly': streak_weekly}))
+
+    streak_scatter = partial(go.Scatter, mode='lines', showlegend=False, line=dict(color='lightgrey'), opacity=0.5)
+
+    df_plot['scatter'] = np.vectorize(streak_scatter)(
+        x=df_plot['streak_total'], y=df_plot['streak_weekly'], legendgroup=df_plot['state'], name=df_plot['state'])
+
     return df_plot
 
 
@@ -114,14 +129,10 @@ def create_figure(df_plot):
 
     """Add streaklines for each bubble in each frame"""
     fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False) for i in df_plot['state'].unique()])
+    dates = df_plot['date_f'].unique()
     for i, f in enumerate(fig.frames):
-        for s in df_plot['state'].unique():
-            df_data = df_plot[(df_plot['date_f'] <= df_plot['date_f'].unique()[i]) & (df_plot['state'] == s)]
-            f.data = f.data + (go.Scatter(
-                x=df_data['total_cases'], y=df_data['weekly_cases'],
-                mode='lines', legendgroup=s, name=s, showlegend=False,
-                line=dict(color='lightgrey'), opacity=0.5
-            ),)
+        f.data = f.data + tuple(df_plot.loc[df_plot['date_f'] == dates[i], 'scatter'])
+
     annotations = []
     doubling_time = [2, 7, 21]
     for i in doubling_time:
@@ -138,6 +149,7 @@ def create_figure(df_plot):
 
 df = prep_data()
 fig_covid = create_figure(df)
+
 
 """Initiate the dash app"""
 app = dash.Dash()
