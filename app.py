@@ -1,12 +1,15 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
+from functools import partial
+
 import plotly.express as px
 import plotly.graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from functools import partial
+from dash.dependencies import Input, Output
+
 
 URL = r"https://api.covid19india.org/states_daily.json"
 
@@ -84,24 +87,55 @@ def prep_data():
     df_plot['state'] = df_plot['state'].map(lambda x: STATE_GLOSSARY[x])
     df_plot['date_f'] = df_plot['date'].map(lambda x: dt.datetime.strptime(x, '%d-%b-%y'))
 
-    """Streak Data"""
-    streak_total = []
-    streak_weekly = []
-    for i, row in df_plot.iterrows():
-        filter_cond = (df_plot['state'] == row['state']) & (df_plot['date_f'] <= row['date_f'])
-        streak_total.append(df_plot.loc[filter_cond, 'total_cases'].tolist())
-        streak_weekly.append(df_plot.loc[filter_cond, 'weekly_cases'].tolist())
-    df_plot = df_plot.assign(**pd.Series({'streak_total': streak_total, 'streak_weekly': streak_weekly}))
-
-    streak_scatter = partial(go.Scatter, mode='lines', showlegend=False, line=dict(color='lightgrey'), opacity=0.5)
-
-    df_plot['scatter'] = np.vectorize(streak_scatter)(
-        x=df_plot['streak_total'], y=df_plot['streak_weekly'], legendgroup=df_plot['state'], name=df_plot['state'])
-
     return df_plot
 
 
-def create_figure(df_plot):
+def create_streaklines(df: pd.DataFrame):
+    """Streak Data"""
+    streak_total = []
+    streak_weekly = []
+    for i, row in df.iterrows():
+        filter_cond = (df['state'] == row['state']) & (df['date_f'] <= row['date_f'])
+        streak_total.append(df.loc[filter_cond, 'total_cases'].tolist())
+        streak_weekly.append(df.loc[filter_cond, 'weekly_cases'].tolist())
+    df = df.assign(**pd.Series({'streak_total': streak_total, 'streak_weekly': streak_weekly}))
+
+    streak_scatter = partial(go.Scatter, mode='lines', showlegend=False, line=dict(color='lightgrey'), opacity=0.5)
+
+    df['scatter'] = np.vectorize(streak_scatter)(
+        x=df['streak_total'], y=df['streak_weekly'], legendgroup=df['state'], name=df['state'])
+
+    return df
+
+
+df_plot = prep_data()
+
+"""Initiate the dash app"""
+app = dash.Dash(__name__)
+server = app.server
+
+app.layout = html.Div(children=[
+    html.H1('India COVID-19 States Growth Trend'),
+    dcc.Loading(
+        id="loading",
+        type="default",
+        fullscreen=True,
+        children=dcc.Graph(id='bubble_graph')
+    ),
+    dcc.Interval(
+        id='fire_graph',
+        interval=0,
+        max_intervals=0,
+        n_intervals=0
+    ),
+])
+
+
+@app.callback(Output('bubble_graph', 'figure'),
+              [Input('fire_graph', 'n_intervals')])
+def update_figure(n):
+    global df_plot
+    df_plot = create_streaklines(df_plot)
     df_plot = df_plot[~pd.isnull(df_plot['weekly_cases'])]  # remove null days
     x_max = 10 ** (int(np.log10(df_plot['total_cases'].max())) + 2)
     y_max = 10 ** (int(np.log10(df_plot['weekly_cases'].max())) + 2)
@@ -114,7 +148,6 @@ def create_figure(df_plot):
         log_x=True, log_y=True,
         template='plotly_white',
         range_x=[100, x_max], range_y=[10, y_max],
-        title='India COVID-19 States Growth Trend<br>' + '<sub>Size of bubble indicates active cases</sub>',
         labels={
             'date': 'Date',
             'state': 'State',
@@ -131,7 +164,7 @@ def create_figure(df_plot):
     fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False) for i in df_plot['state'].unique()])
     dates = df_plot['date_f'].unique()
     for i, f in enumerate(fig.frames):
-        f.data = f.data + tuple(df_plot.loc[df_plot['date_f'] == dates[i], 'scatter'])
+        f.data = tuple(df_plot.loc[df_plot['date_f'] == dates[i], 'scatter']) + f.data
 
     annotations = []
     doubling_time = [2, 7, 21]
@@ -146,20 +179,6 @@ def create_figure(df_plot):
     fig.update_layout(annotations=annotations, height=700)
     return fig
 
-
-df = prep_data()
-fig_covid = create_figure(df)
-
-
-"""Initiate the dash app"""
-app = dash.Dash()
-server = app.server
-app.layout = html.Div([
-    dcc.Graph(
-        id='COVID-19-india',
-        figure=fig_covid
-    )
-])
 
 if __name__ == '__main__':
     app.run_server()
