@@ -87,6 +87,11 @@ def prep_data():
     df_plot['state'] = df_plot['state'].map(lambda x: STATE_GLOSSARY[x])
     df_plot['date_f'] = df_plot['date'].map(lambda x: dt.datetime.strptime(x, '%d-%b-%y'))
 
+    """Filter for last 21 days and 1 date per week before that"""
+    dates = df_plot['date_f'].unique()
+    filtered_dates = [d for i, d in enumerate(dates) if i >= len(dates)-21 or i % 7 == 0]
+    df_plot = df_plot[df_plot['date_f'].isin(filtered_dates)]
+
     return df_plot
 
 
