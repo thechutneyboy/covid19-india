@@ -76,7 +76,7 @@ def prep_data():
     ).reset_index().rename(columns={'cases': 'resolved_cases'})
 
     df_plot = df_states[
-        (df_states['status'] == 'Confirmed') # & (~df_states['state'].isin(states_to_hide))
+        (df_states['status'] == 'Confirmed') & (~df_states['state'].isin(['un']))
         ][['date', 'state', 'cases']]
     df_plot = pd.merge(left=df_plot, right=df_resolved, on=['date', 'state'], how='left')
 
@@ -87,7 +87,7 @@ def prep_data():
     df_plot['state'] = df_plot['state'].map(lambda x: STATE_GLOSSARY[x])
     df_plot['date_f'] = df_plot['date'].map(lambda x: dt.datetime.strptime(x, '%d-%b-%y'))
 
-    """Filter for last 21 days and 1 date per week before that"""
+    """Filter for daily data for last 21 days and weekly data before that"""
     dates = df_plot['date_f'].unique()
     filtered_dates = [d for i, d in enumerate(dates) if i >= len(dates)-21 or i % 7 == 0]
     df_plot = df_plot[df_plot['date_f'].isin(filtered_dates)]
@@ -118,6 +118,7 @@ df_plot = prep_data()
 """Initiate the dash app"""
 app = dash.Dash(__name__)
 server = app.server
+app.title = 'India COVID-19 States Growth Trend'
 
 app.layout = html.Div(children=[
     html.H1('India COVID-19 States Growth Trend'),
@@ -163,7 +164,6 @@ def update_figure(n):
         animation_group='state',
         animation_frame='date',
     )
-    fig.update_traces(textposition='top center')
 
     """Add streaklines for each bubble in each frame"""
     fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False) for i in df_plot['state'].unique()])
@@ -171,13 +171,15 @@ def update_figure(n):
     for i, f in enumerate(fig.frames):
         f.data = tuple(df_plot.loc[df_plot['date_f'] == dates[i], 'scatter']) + f.data
 
+    fig.update_traces(textposition='top center')
+
     annotations = []
     doubling_time = [2, 7, 21]
     for i in doubling_time:
-        fig.add_trace(go.Scatter(x=[100, 300000], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * 300000],
+        fig.add_trace(go.Scatter(x=[100, 1000000], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * 1000000],
                                  name=f'{i}-Day Doubling', mode='lines',
                                  line=dict(dash='dot', color='grey')))
-        annotations.append(dict(x=np.log10(300000), y=np.log10((1 - 1 / 2 ** (7 / i)) * 300000),
+        annotations.append(dict(x=np.log10(1000000), y=np.log10((1 - 1 / 2 ** (7 / i)) * 1000000),
                                 text=f'{i}-Day Doubling', showarrow=False,
                                 xshift=50, align='left'))
 
