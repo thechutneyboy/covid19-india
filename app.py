@@ -12,6 +12,8 @@ from dash.dependencies import Input, Output
 
 
 URL = r"https://api.covid19india.org/states_daily.json"
+githublink='https://github.com/thechutneyboy/covid19-india'
+videourl='https://www.youtube.com/watch?v=54XLXg4fYsc'
 
 STATE_GLOSSARY = {
     'ap': 'Andhra Pradesh',
@@ -134,6 +136,9 @@ app.layout = html.Div(children=[
         max_intervals=0,
         n_intervals=0
     ),
+    html.A('Code on Github', href=githublink),
+    html.Br(),
+    html.A('Watch video by Minute Physics to understand "If we are really beating COVID-19? "', href=videourl),
 ])
 
 
