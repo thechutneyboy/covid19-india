@@ -124,21 +124,27 @@ app.title = 'India COVID-19 States Growth Trend'
 
 app.layout = html.Div(children=[
     html.H1('India COVID-19 States Growth Trend'),
-    dcc.Loading(
-        id="loading",
-        type="default",
-        fullscreen=True,
-        children=dcc.Graph(id='bubble_graph')
-    ),
-    dcc.Interval(
-        id='fire_graph',
-        interval=0,
-        max_intervals=0,
-        n_intervals=0
-    ),
-    html.A('Code on Github', href=githublink),
-    html.Br(),
-    html.A('Watch video by Minute Physics to understand "If we are really beating COVID-19? "', href=videourl),
+    html.Div(children=[
+        dcc.Loading(
+            id="loading",
+            type="default",
+            fullscreen=True,
+            children=dcc.Graph(id='bubble_graph',
+                               config=dict(responsive=True, autosizable=True),
+                               style={'height': '80vh'})
+        ),
+        dcc.Interval(
+            id='fire_graph',
+            interval=0,
+            max_intervals=0,
+            n_intervals=0
+        ),
+        html.Div(children=[
+            html.A('Code on Github', href=githublink),
+            html.Br(),
+            html.A('Watch video by Minute Physics to understand "If we are really beating COVID-19? "', href=videourl),
+        ])
+    ]),
 ])
 
 
@@ -188,7 +194,7 @@ def update_figure(n):
                                 text=f'{i}-Day Doubling', showarrow=False,
                                 xshift=50, align='left'))
 
-    fig.update_layout(annotations=annotations, height=700)
+    fig.update_layout(annotations=annotations)
     return fig
 
 
