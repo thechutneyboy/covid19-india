@@ -14,6 +14,8 @@ from dash.dependencies import Input, Output
 URL = r"https://api.covid19india.org/states_daily.json"
 githublink='https://github.com/thechutneyboy/covid19-india'
 videourl='https://www.youtube.com/watch?v=54XLXg4fYsc'
+aatish_url = 'https://aatishb.com/'
+source_url = 'https://api.covid19india.org/'
 
 STATE_GLOSSARY = {
     'ap': 'Andhra Pradesh',
@@ -118,12 +120,16 @@ def create_streaklines(df: pd.DataFrame):
 df_plot = prep_data()
 
 """Initiate the dash app"""
-app = dash.Dash(__name__)
+external_stylesheets = ['https://codepen.io/chridypp/pen/bWLwgP.css']
+app = dash.Dash(__name__, external_stylesheets= external_stylesheets)
 server = app.server
 app.title = 'India COVID-19 States Growth Trend'
 
 app.layout = html.Div(children=[
     html.H1('India COVID-19 States Growth Trend'),
+    html.Img(src="/Assets/Coronavirus_presentase_down.jpg"),
+    html.Br(),
+    " Logic Explained in the video link ", html.A('(click here to watch now!)', href=videourl, target="_blank"),
     dcc.Loading(
         id="loading",
         type="default",
@@ -136,11 +142,12 @@ app.layout = html.Div(children=[
         max_intervals=0,
         n_intervals=0
     ),
-    html.A('Code on Github', href=githublink),
+    "Created by Pramod Kasi & Disha Sarawgi inspired by the works of ",
+    html.A('Aatish Bhatia', href=aatish_url, target="_blank"), " & Minute Physics. Live data source: ",
+    html.A('api.covid19india.org', href=source_url, target="_blank"), " (updated daily around 00:00 IST) ; ",
     html.Br(),
-    html.A('Watch video by Minute Physics to understand "If we are really beating COVID-19? "', href=videourl),
+    "For Credits & Source ", html.A('click here', href=githublink, target="_blank"),
 ])
-
 
 @app.callback(Output('bubble_graph', 'figure'),
               [Input('fire_graph', 'n_intervals')])
