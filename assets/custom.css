@@ -1,4 +1,7 @@
-.flexbox {
-    display: flex;
-    flex-direction: column;
+.footer {
+    overflow: hidden;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    font-size: small;
 }
