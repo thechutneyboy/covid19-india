@@ -136,11 +136,11 @@ server = app.server
 app.title = 'India COVID-19 States Growth Trend'
 
 app.layout = html.Div(children=[
-    html.H3('India COVID-19 States Growth Trend'),
+    html.H3('India COVID-19 States Growth Trend', className='header'),
     html.Div(children=[
-        'Lorem Ipsum text...',
+        html.Div('Lorem Ipsum text...', style={'width': '100%'}),
         html.Button(children='Watch Minute Physics Explainer', type='button',
-                    className='btn btn-primary', **{'data-toggle': 'modal', 'data-target': '#videoModal'}),
+                    className='btn btn-primary btn-sm', **{'data-toggle': 'modal', 'data-target': '#videoModal'}),
         html.Div(id='videoModal', children=[
             html.Div(
                 html.Div(
@@ -155,7 +155,7 @@ app.layout = html.Div(children=[
             )
         ], className='modal fade', role='dialog', tabIndex='-1',
                  **{'data-keyboard': 'false', 'aria-labelledby': 'videoModalLabel', 'aria-hidden': 'true'}),
-    ]),
+    ], className='subheader'),
     dcc.Loading(
         id="loading",
         type="default",
