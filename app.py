@@ -14,6 +14,7 @@ from dash.dependencies import Input, Output
 URL = r"https://api.covid19india.org/states_daily.json"
 githublink='https://github.com/thechutneyboy/covid19-india'
 videourl='https://www.youtube.com/watch?v=54XLXg4fYsc'
+embedurl='https://www.youtube.com/embed/54XLXg4fYsc'
 aatish_url = 'https://aatishb.com/'
 source_url = 'https://api.covid19india.org/'
 
@@ -120,20 +121,45 @@ def create_streaklines(df: pd.DataFrame):
 df_plot = prep_data()
 
 """Initiate the dash app"""
-external_stylesheets = ['https://codepen.io/chridypp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets= external_stylesheets)
+external_stylesheets = [
+    'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css'
+]
+
+external_scripts = [
+    'https://code.jquery.com/jquery-3.5.1.slim.min.js',
+    'https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js',
+    'https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js'
+]
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 server = app.server
 app.title = 'India COVID-19 States Growth Trend'
 
 app.layout = html.Div(children=[
-    html.H1('India COVID-19 States Growth Trend'),
-    html.Img(src="/Assets/Coronavirus_presentase_down.jpg"),
-    html.Br(),
-    " Logic Explained in the video link ", html.A('(click here to watch now!)', href=videourl, target="_blank"),
+    html.H3('India COVID-19 States Growth Trend'),
+    html.Div(children=[
+        'Lorem Ipsum text...',
+        html.Button(children='Watch Minute Physics Explainer', type='button',
+                    className='btn btn-primary', **{'data-toggle': 'modal', 'data-target': '#videoModal'}),
+        html.Div(id='videoModal', children=[
+            html.Div(
+                html.Div(
+                    html.Div(
+                        html.Div(
+                            html.Div(
+                                html.Iframe(src=embedurl, className='embed-responsive-item')
+                            ), className='embed-responsive embed-responsive-16by9 z-depth-1-half'
+                        ), className='modal-body mb-0 p-0'
+                    ), className='modal-content'
+                ), className='modal-dialog modal-xl modal-dialog-centered'
+            )
+        ], className='modal fade', role='dialog', tabIndex='-1',
+                 **{'data-keyboard': 'false', 'aria-labelledby': 'videoModalLabel', 'aria-hidden': 'true'}),
+    ]),
     dcc.Loading(
         id="loading",
         type="default",
-        fullscreen=True,
+        # fullscreen=True,
         children=dcc.Graph(id='bubble_graph',
                            config=dict(responsive=True, autosizable=True),
                            style={'height': '80vh'})
@@ -144,12 +170,14 @@ app.layout = html.Div(children=[
         max_intervals=0,
         n_intervals=0
     ),
-    "Created by Pramod Kasi & Disha Sarawgi inspired by the works of ",
-    html.A('Aatish Bhatia', href=aatish_url, target="_blank"), " & Minute Physics. Live data source: ",
-    html.A('api.covid19india.org', href=source_url, target="_blank"), " (updated daily around 00:00 IST) ; ",
-    html.Br(),
-    "For Credits & Source ", html.A('click here', href=githublink, target="_blank"),
+    html.Div(children=[
+        "Created by Pramod Kasi & Disha Sarawgi, inspired by Minute Physics & Aatish Bhatia's ",
+        html.A('Covid Trends', href=aatish_url, target="_blank"), " · Data Source: ",
+        html.A('api.covid19india.org', href=source_url, target="_blank"),
+        " · Source Code: ", html.A('Github', href=githublink, target="_blank")
+    ], className='footer')
 ])
+
 
 @app.callback(Output('bubble_graph', 'figure'),
               [Input('fire_graph', 'n_intervals')])
