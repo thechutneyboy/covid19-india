@@ -179,28 +179,7 @@ app.layout = html.Div(children=[
         html.A('Minute Physics', href=URL_MINUTEPHYSICS, target='_blank'),
         " & Aatish Bhatia's ", html.A('Covid Trends', href=URL_AATISH, target='_blank'),
         " · Data Source: ", html.A('api.covid19india.org', href=URL_DATA, target='_blank'),
-        " · Source Code: ", html.A('Github', href=URL_GITHUB, target='_blank'),
-        html.Div(children=[
-            html.Script(type="text/javascript", src="https://www.stat-counter.org/count/5xgs"),
-            html.Br(),
-            html.A('COVID', href='https://covid19indiapd.herokuapp.com/'),
-            html.Script(type='text/javascript', src='https://whomania.com/ctr?id=ef0f4a9519aed2d7eff944f4ece111e47ee84fb0')
-        ]),
-        html.Div(
-            html.Script(
-                type="text/javascript",
-                children=[
-                    'var sc_project=12345976;',
-                    'var sc_invisible=0;',
-                    'var sc_security="f591ed0b";',
-                    'var sc_https=1;',
-                    'var sc_remove_link=1;',
-                    'var scJsHost = "https://";',
-                    """document.write("<sc"+"ript type='text/javascript' src='" + scJsHost+
-                    "statcounter.com/counter/counter.js'></"+"script>");"""
-                ]
-            )
-        )
+        " · Source Code: ", html.A('Github', href=URL_GITHUB, target='_blank')
     ], className='footer')
 ])
 
