@@ -12,11 +12,11 @@ from dash.dependencies import Input, Output
 
 
 URL = r"https://api.covid19india.org/states_daily.json"
-githublink='https://github.com/thechutneyboy/covid19-india'
-videourl='https://www.youtube.com/watch?v=54XLXg4fYsc'
-embedurl='https://www.youtube.com/embed/54XLXg4fYsc'
-aatish_url = 'https://aatishb.com/'
-source_url = 'https://api.covid19india.org/'
+URL_GITHUB = 'https://github.com/thechutneyboy/covid19-india'
+URL_YOUTUBE = 'https://www.youtube.com/embed/54XLXg4fYsc'
+URL_MINUTEPHYSICS = 'https://www.youtube.com/user/minutephysics'
+URL_AATISH = 'https://aatishb.com/'
+URL_DATA = 'https://api.covid19india.org/'
 
 STATE_GLOSSARY = {
     'ap': 'Andhra Pradesh',
@@ -105,15 +105,17 @@ def create_streaklines(df: pd.DataFrame):
     streak_total = []
     streak_weekly = []
     for i, row in df.iterrows():
-        filter_cond = (df['state'] == row['state']) & (df['date_f'] <= row['date_f'])
+        filter_cond = (df['state'] == row['state']) & (df['date_f'] <= row['date_f']) & (df['total_cases'] >= 100)
         streak_total.append(df.loc[filter_cond, 'total_cases'].tolist())
         streak_weekly.append(df.loc[filter_cond, 'weekly_cases'].tolist())
     df = df.assign(**pd.Series({'streak_total': streak_total, 'streak_weekly': streak_weekly}))
 
-    streak_scatter = partial(go.Scatter, mode='lines', showlegend=False, line=dict(color='lightgrey'), opacity=0.5)
+    streak_scatter = partial(go.Scatter, mode='lines', showlegend=False, line=dict(color='lightgrey'), opacity=0.5,
+                             hovertemplate="Total Cases: %{x:,}<br>" + "New Cases in the Past Week: %{y:,}")
 
     df['scatter'] = np.vectorize(streak_scatter)(
-        x=df['streak_total'], y=df['streak_weekly'], legendgroup=df['state'], name=df['state'])
+        x=df['streak_total'], y=df['streak_weekly'], legendgroup=df['state'], name=df['state']
+    )
 
     return df
 
@@ -136,33 +138,35 @@ server = app.server
 app.title = 'India COVID-19 States Growth Trend'
 
 app.layout = html.Div(children=[
-    html.H3('India COVID-19 States Growth Trend', className='header'),
     html.Div(children=[
-        html.Div('Lorem Ipsum text...', style={'width': '100%'}),
+        html.H3('India COVID-19 States Growth Trend', className='header'),
         html.Button(children='Watch Minute Physics Explainer', type='button',
                     className='btn btn-primary btn-sm', **{'data-toggle': 'modal', 'data-target': '#videoModal'}),
-        html.Div(id='videoModal', children=[
+        html.Div(
+            id='videoModal', children=[
             html.Div(
                 html.Div(
                     html.Div(
                         html.Div(
                             html.Div(
-                                html.Iframe(src=embedurl, className='embed-responsive-item')
+                                html.Iframe(src=URL_YOUTUBE, className='embed-responsive-item')
                             ), className='embed-responsive embed-responsive-16by9 z-depth-1-half'
                         ), className='modal-body mb-0 p-0'
                     ), className='modal-content'
                 ), className='modal-dialog modal-xl modal-dialog-centered'
             )
         ], className='modal fade', role='dialog', tabIndex='-1',
-                 **{'data-keyboard': 'false', 'aria-labelledby': 'videoModalLabel', 'aria-hidden': 'true'}),
-    ], className='subheader'),
+                 **{'data-keyboard': 'false', 'aria-labelledby': 'videoModalLabel', 'aria-hidden': 'true'}
+        )
+    ], className='banner'),
     dcc.Loading(
         id="loading",
         type="default",
-        # fullscreen=True,
         children=dcc.Graph(id='bubble_graph',
                            config=dict(responsive=True, autosizable=True),
-                           style={'height': '80vh'})
+                           style={'height': '85vh'},
+                           ),
+        style={'height': '80vh'}
     ),
     dcc.Interval(
         id='fire_graph',
@@ -171,10 +175,32 @@ app.layout = html.Div(children=[
         n_intervals=0
     ),
     html.Div(children=[
-        "Created by Pramod Kasi & Disha Sarawgi, inspired by Minute Physics & Aatish Bhatia's ",
-        html.A('Covid Trends', href=aatish_url, target="_blank"), " · Data Source: ",
-        html.A('api.covid19india.org', href=source_url, target="_blank"),
-        " · Source Code: ", html.A('Github', href=githublink, target="_blank")
+        "Created by Pramod Kasi & Disha Sarawgi, inspired by ",
+        html.A('Minute Physics', href=URL_MINUTEPHYSICS, target='_blank'),
+        " & Aatish Bhatia's ", html.A('Covid Trends', href=URL_AATISH, target='_blank'),
+        " · Data Source: ", html.A('api.covid19india.org', href=URL_DATA, target='_blank'),
+        " · Source Code: ", html.A('Github', href=URL_GITHUB, target='_blank'),
+        html.Div(
+            html.Script(type="text/javascript", src="https://www.stat-counter.org/count/5xgs"),
+            html.Br(),
+            html.A('COVID', href='https://covid19indiapd.herokuapp.com/'),
+            html.Script(type='text/javascript', src='https://whomania.com/ctr?id=ef0f4a9519aed2d7eff944f4ece111e47ee84fb0')
+        ),
+        html.Div(
+            html.Script(
+                type="text/javascript",
+                children=[
+                    'var sc_project=12345976;',
+                    'var sc_invisible=0;',
+                    'var sc_security="f591ed0b";',
+                    'var sc_https=1;',
+                    'var sc_remove_link=1;',
+                    'var scJsHost = "https://";',
+                    """document.write("<sc"+"ript type='text/javascript' src='" + scJsHost+
+                    "statcounter.com/counter/counter.js'></"+"script>");"""
+                ]
+            ),
+        )
     ], className='footer')
 ])
 
@@ -185,6 +211,7 @@ def update_figure(n):
     global df_plot
     df_plot = create_streaklines(df_plot)
     df_plot = df_plot[~pd.isnull(df_plot['weekly_cases'])]  # remove null days
+    df_plot.loc[df_plot['total_cases'] < 100, 'total_cases'] = np.NaN   # remove points with total_cases < 100
     x_max = 10 ** (int(np.log10(df_plot['total_cases'].max())) + 2)
     y_max = 10 ** (int(np.log10(df_plot['weekly_cases'].max())) + 2)
     fig = px.scatter(
@@ -195,7 +222,6 @@ def update_figure(n):
         text='state',
         log_x=True, log_y=True,
         template='plotly_white',
-        range_x=[100, x_max], range_y=[10, y_max],
         labels={
             'date': 'Date',
             'state': 'State',
@@ -208,10 +234,10 @@ def update_figure(n):
     )
 
     """Add streaklines for each bubble in each frame"""
-    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False) for i in df_plot['state'].unique()])
+    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False, hoverlabel=None) for i in df_plot['state'].unique()])
     dates = df_plot['date_f'].unique()
     for i, f in enumerate(fig.frames):
-        f.data = tuple(df_plot.loc[df_plot['date_f'] == dates[i], 'scatter']) + f.data
+        f.data = tuple(df_plot.loc[(df_plot['date_f'] == dates[i]) & pd.notnull(df_plot['scatter']), 'scatter']) + f.data
 
     fig.update_traces(textposition='top center')
 
@@ -225,7 +251,12 @@ def update_figure(n):
                                 text=f'{i}-Day Doubling', showarrow=False,
                                 xshift=50, align='left'))
 
-    fig.update_layout(annotations=annotations)
+    fig.update_layout(
+        annotations=annotations,
+        xaxis=dict(range=(2, np.log10(x_max)), type='log'),
+        yaxis=dict(range=(1, np.log10(y_max)), type='log')
+    )
+
     return fig
 
 

@@ -1,12 +1,14 @@
-.header {
+.banner {
     padding: 0.75rem;
     margin-bottom: 0 !important;
     color: white;
     background-color: indigo;
+    display: flex;
+    flex-direction: row;
 }
 
-.subheader {
-    padding: 0.75rem;
+.header {
+    flex-grow: 1;
 }
 
 .footer {
