@@ -1,7 +1,22 @@
+.banner {
+    padding: 0.75rem;
+    margin-bottom: 0 !important;
+    color: white;
+    background-color: indigo;
+    display: flex;
+    flex-direction: row;
+}
+
+.header {
+    flex-grow: 1;
+}
+
 .footer {
     overflow: hidden;
     position: fixed;
+    padding: 0.75rem;
     bottom: 0;
     width: 100%;
     font-size: small;
+    background-color: lightgrey;
 }
