@@ -200,7 +200,15 @@ def update_figure(n):
         color='state', hover_name='state',
         text='state',
         log_x=True, log_y=True,
+        range_x=[100, x_max], range_y=[10, y_max],
         template='plotly_white',
+        hover_data={
+            'state': False,
+            'date': True,
+            'weekly_cases': ':,',
+            'total_cases': ':,',
+            'active_cases': ':,'
+        },
         labels={
             'date': 'Date',
             'state': 'State',
@@ -224,7 +232,8 @@ def update_figure(n):
     doubling_time = [2, 7, 21]
     for i in doubling_time:
         fig.add_trace(go.Scatter(x=[100, 1000000], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * 1000000],
-                                 name=f'{i}-Day Doubling', mode='lines',
+                                 name='n-Day Doubling Lines', mode='lines', hoverinfo='skip', legendgroup='Doubling Lines',
+                                 showlegend=True if i == 2 else False,    # Show only one in the legend
                                  line=dict(dash='dot', color='grey')))
         annotations.append(dict(x=np.log10(1000000), y=np.log10((1 - 1 / 2 ** (7 / i)) * 1000000),
                                 text=f'{i}-Day Doubling', showarrow=False,
@@ -232,8 +241,8 @@ def update_figure(n):
 
     fig.update_layout(
         annotations=annotations,
-        xaxis=dict(range=(2, np.log10(x_max)), type='log'),
-        yaxis=dict(range=(1, np.log10(y_max)), type='log')
+        xaxis=dict(range=(2, np.log10(x_max)), type='log', autorange=False),
+        yaxis=dict(range=(1, np.log10(y_max)), type='log', autorange=False)
     )
 
     return fig
