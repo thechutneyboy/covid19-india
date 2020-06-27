@@ -140,11 +140,12 @@ app = dash.Dash(
         {'name': 'description',
          'content': 'An interactive visualisation to track the trajectory of COVID-19 outbreak in Indian States.'},
         # Twitter Card Data
-        {'name': 'twitter:card', 'content': 'summary'},
+        {'name': 'twitter:card', 'content': 'summary_large_image'},
         {'name': 'twitter:title', 'content': 'India COVID-19 States Growth Trend'},
         {'name': 'twitter:description',
          'content': 'An interactive visualisation to track the trajectory of COVID-19 outbreak in Indian States.'},
         {'name': 'twitter:site', 'content': '@KasiPramod'},
+        {'name': 'twitter:image', 'content': 'https://covid19indiapd.herokuapp.com/assets/preview.png'},
         # Open Graph Data
         {'property': 'og:title', 'content': 'India COVID-19 States Growth Trend'},
         {'property': 'og:type', 'content': 'article'},
