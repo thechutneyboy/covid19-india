@@ -209,14 +209,14 @@ app.layout = html.Div(children=[
               [Input('fire_graph', 'n_intervals')])
 def update_figure(n):
     global df_plot
-    df_plot = create_streaklines(df_plot)
-    df_plot = df_plot[~pd.isnull(df_plot['weekly_cases'])]  # remove null days
-    df_plot.loc[df_plot['total_cases'] < 100, 'total_cases'] = np.NaN   # remove points with total_cases < 100
+    df_fig = create_streaklines(df_plot)
+    df_fig = df_fig[~pd.isnull(df_fig['weekly_cases'])]  # remove null days
+    df_fig.loc[df_fig['total_cases'] < 100, 'total_cases'] = np.NaN   # remove points with total_cases < 100
 
-    x_max = 10 ** (int(np.log10(df_plot['total_cases'].max())) + 2)
-    y_max = 10 ** (int(np.log10(df_plot['weekly_cases'].max())) + 2)
+    x_max = 10 ** (int(np.log10(df_fig['total_cases'].max())) + 2)
+    y_max = 10 ** (int(np.log10(df_fig['weekly_cases'].max())) + 2)
 
-    df_plot.rename(columns={    # rename instead of labels in px.scatter() as hover_data gets ignored
+    df_fig.rename(columns={    # rename instead of labels in px.scatter() as hover_data gets ignored
         'date': 'Date',
         'state': 'State',
         'total_cases': 'Total Cases',
@@ -225,7 +225,7 @@ def update_figure(n):
     }, inplace=True)
 
     fig = px.scatter(
-        data_frame=df_plot,
+        data_frame=df_fig,
         x='Total Cases', y='New Cases in the Past Week',
         size='Active Cases', size_max=100,
         color='State', hover_name='State',
@@ -245,10 +245,10 @@ def update_figure(n):
     )
 
     """Add streaklines for each bubble in each frame"""
-    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False, hoverlabel=None) for i in df_plot['State'].unique()])
-    dates = df_plot['date_f'].unique()
+    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False, hoverlabel=None) for i in df_fig['State'].unique()])
+    dates = df_fig['date_f'].unique()
     for i, f in enumerate(fig.frames):
-        f.data = tuple(df_plot.loc[(df_plot['date_f'] == dates[i]) & pd.notnull(df_plot['scatter']), 'scatter']) + f.data
+        f.data = tuple(df_fig.loc[(df_fig['date_f'] == dates[i]) & pd.notnull(df_fig['scatter']), 'scatter']) + f.data
 
     fig.update_traces(textposition='top center')
 
@@ -268,6 +268,7 @@ def update_figure(n):
         xaxis=dict(range=(2, np.log10(x_max)), type='log', autorange=False),
         yaxis=dict(range=(1, np.log10(y_max)), type='log', autorange=False)
     )
+    del df_fig
 
     return fig
 
