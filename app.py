@@ -44,7 +44,7 @@ STATE_GLOSSARY = {
     'tn': 'Tamil Nadu',
     'tg': 'Telangana',
     'tr': 'Tripura',
-    'tt': 'Total',
+    'tt': 'India',
     'un': 'Unassigned',
     'ut': 'Uttarakhand',
     'up': 'Uttar Pradesh',
@@ -110,7 +110,7 @@ def create_streaklines(df: pd.DataFrame):
         streak_weekly.append(df.loc[filter_cond, 'weekly_cases'].tolist())
     df = df.assign(**pd.Series({'streak_total': streak_total, 'streak_weekly': streak_weekly}))
 
-    streak_scatter = partial(go.Scatter, mode='lines', showlegend=False, line=dict(color='lightgrey'), opacity=0.5,
+    streak_scatter = partial(go.Scatter, mode='lines', showlegend=False, line=dict(color='lightgrey'), opacity=0.7,
                              hovertemplate="Total Cases: %{x:,}<br>" + "New Cases in the Past Week: %{y:,}")
 
     df['scatter'] = np.vectorize(streak_scatter)(
@@ -133,7 +133,28 @@ external_scripts = [
     'https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js'
 ]
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets, external_scripts=external_scripts)
+app = dash.Dash(
+    __name__,
+    external_stylesheets=external_stylesheets, external_scripts=external_scripts,
+    meta_tags=[
+        {'name': 'description',
+         'content': 'An interactive visualisation to track the trajectory of COVID-19 outbreak in Indian States.'},
+        # Twitter Card Data
+        {'name': 'twitter:card', 'content': 'summary_large_image'},
+        {'name': 'twitter:title', 'content': 'India COVID-19 States Growth Trend'},
+        {'name': 'twitter:description',
+         'content': 'An interactive visualisation to track the trajectory of COVID-19 outbreak in Indian States.'},
+        {'name': 'twitter:site', 'content': '@KasiPramod'},
+        {'name': 'twitter:image', 'content': 'https://covid19indiapd.herokuapp.com/assets/preview.png'},
+        # Open Graph Data
+        {'property': 'og:title', 'content': 'India COVID-19 States Growth Trend'},
+        {'property': 'og:type', 'content': 'article'},
+        {'property': 'og:url', 'content': 'https://covid19indiapd.herokuapp.com/'},
+        {'property': 'og:image', 'content': 'https://covid19indiapd.herokuapp.com/assets/preview.png'},
+        {'property': 'og:description',
+         'content': 'An interactive visualisation to track the trajectory of COVID-19 outbreak in Indian States.'},
+    ]
+)
 server = app.server
 app.title = 'India COVID-19 States Growth Trend'
 
@@ -191,37 +212,40 @@ def update_figure(n):
     df_plot = create_streaklines(df_plot)
     df_plot = df_plot[~pd.isnull(df_plot['weekly_cases'])]  # remove null days
     df_plot.loc[df_plot['total_cases'] < 100, 'total_cases'] = np.NaN   # remove points with total_cases < 100
+
     x_max = 10 ** (int(np.log10(df_plot['total_cases'].max())) + 2)
     y_max = 10 ** (int(np.log10(df_plot['weekly_cases'].max())) + 2)
+
+    df_plot.rename(columns={    # rename instead of labels in px.scatter() as hover_data gets ignored
+        'date': 'Date',
+        'state': 'State',
+        'total_cases': 'Total Cases',
+        'weekly_cases': 'New Cases in the Past Week',
+        'active_cases': 'Active Cases'
+    }, inplace=True)
+
     fig = px.scatter(
         data_frame=df_plot,
-        x='total_cases', y='weekly_cases',
-        size='active_cases', size_max=100,
-        color='state', hover_name='state',
-        text='state',
+        x='Total Cases', y='New Cases in the Past Week',
+        size='Active Cases', size_max=100,
+        color='State', hover_name='State',
+        text='State',
         log_x=True, log_y=True,
         range_x=[100, x_max], range_y=[10, y_max],
         template='plotly_white',
         hover_data={
-            'state': False,
-            'date': True,
-            'weekly_cases': ':,',
-            'total_cases': ':,',
-            'active_cases': ':,'
+            'State': False,
+            'Date': True,
+            'New Cases in the Past Week': ':,.0f',
+            'Total Cases': ':,.0f',
+            'Active Cases': ':,.0f'
         },
-        labels={
-            'date': 'Date',
-            'state': 'State',
-            'total_cases': 'Total Cases',
-            'weekly_cases': 'New Cases in the Past Week',
-            'active_cases': 'Active Cases'
-        },
-        animation_group='state',
-        animation_frame='date',
+        animation_group='State',
+        animation_frame='Date',
     )
 
     """Add streaklines for each bubble in each frame"""
-    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False, hoverlabel=None) for i in df_plot['state'].unique()])
+    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False, hoverlabel=None) for i in df_plot['State'].unique()])
     dates = df_plot['date_f'].unique()
     for i, f in enumerate(fig.frames):
         f.data = tuple(df_plot.loc[(df_plot['date_f'] == dates[i]) & pd.notnull(df_plot['scatter']), 'scatter']) + f.data
