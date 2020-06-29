@@ -121,6 +121,7 @@ def create_streaklines(df: pd.DataFrame):
 
 
 df_plot = prep_data()
+fig = None
 
 """Initiate the dash app"""
 external_stylesheets = [
@@ -209,68 +210,73 @@ app.layout = html.Div(children=[
               [Input('fire_graph', 'n_intervals')])
 def update_figure(n):
     global df_plot
-    df_fig = create_streaklines(df_plot)
-    df_fig = df_fig[~pd.isnull(df_fig['weekly_cases'])]  # remove null days
-    df_fig.loc[df_fig['total_cases'] < 100, 'total_cases'] = np.NaN   # remove points with total_cases < 100
+    global fig
 
-    x_max = 10 ** (int(np.log10(df_fig['total_cases'].max())) + 2)
-    y_max = 10 ** (int(np.log10(df_fig['weekly_cases'].max())) + 2)
+    if fig:
+        return fig
+    else:
+        df_fig = create_streaklines(df_plot)
+        df_fig = df_fig[~pd.isnull(df_fig['weekly_cases'])]  # remove null days
+        df_fig.loc[df_fig['total_cases'] < 100, 'total_cases'] = np.NaN   # remove points with total_cases < 100
 
-    df_fig.rename(columns={    # rename instead of labels in px.scatter() as hover_data gets ignored
-        'date': 'Date',
-        'state': 'State',
-        'total_cases': 'Total Cases',
-        'weekly_cases': 'New Cases in the Past Week',
-        'active_cases': 'Active Cases'
-    }, inplace=True)
+        x_max = 10 ** (int(np.log10(df_fig['total_cases'].max())) + 2)
+        y_max = 10 ** (int(np.log10(df_fig['weekly_cases'].max())) + 2)
 
-    fig = px.scatter(
-        data_frame=df_fig,
-        x='Total Cases', y='New Cases in the Past Week',
-        size='Active Cases', size_max=100,
-        color='State', hover_name='State',
-        text='State',
-        log_x=True, log_y=True,
-        range_x=[100, x_max], range_y=[10, y_max],
-        template='plotly_white',
-        hover_data={
-            'State': False,
-            'Date': True,
-            'New Cases in the Past Week': ':,.0f',
-            'Total Cases': ':,.0f',
-            'Active Cases': ':,.0f'
-        },
-        animation_group='State',
-        animation_frame='Date',
-    )
+        df_fig.rename(columns={    # rename instead of labels in px.scatter() as hover_data gets ignored
+            'date': 'Date',
+            'state': 'State',
+            'total_cases': 'Total Cases',
+            'weekly_cases': 'New Cases in the Past Week',
+            'active_cases': 'Active Cases'
+        }, inplace=True)
 
-    """Add streaklines for each bubble in each frame"""
-    fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False, hoverlabel=None) for i in df_fig['State'].unique()])
-    dates = df_fig['date_f'].unique()
-    for i, f in enumerate(fig.frames):
-        f.data = tuple(df_fig.loc[(df_fig['date_f'] == dates[i]) & pd.notnull(df_fig['scatter']), 'scatter']) + f.data
+        fig = px.scatter(
+            data_frame=df_fig,
+            x='Total Cases', y='New Cases in the Past Week',
+            size='Active Cases', size_max=100,
+            color='State', hover_name='State',
+            text='State',
+            log_x=True, log_y=True,
+            range_x=[100, x_max], range_y=[10, y_max],
+            template='plotly_white',
+            hover_data={
+                'State': False,
+                'Date': True,
+                'New Cases in the Past Week': ':,.0f',
+                'Total Cases': ':,.0f',
+                'Active Cases': ':,.0f'
+            },
+            animation_group='State',
+            animation_frame='Date',
+        )
 
-    fig.update_traces(textposition='top center')
+        """Add streaklines for each bubble in each frame"""
+        fig.add_traces([go.Scatter(x=[0, 10], y=[0, 10], showlegend=False, hoverlabel=None) for i in df_fig['State'].unique()])
+        dates = df_fig['date_f'].unique()
+        for i, f in enumerate(fig.frames):
+            f.data = tuple(df_fig.loc[(df_fig['date_f'] == dates[i]) & pd.notnull(df_fig['scatter']), 'scatter']) + f.data
 
-    annotations = []
-    doubling_time = [2, 7, 21]
-    for i in doubling_time:
-        fig.add_trace(go.Scatter(x=[100, 1000000], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * 1000000],
-                                 name='n-Day Doubling Lines', mode='lines', hoverinfo='skip', legendgroup='Doubling Lines',
-                                 showlegend=True if i == 2 else False,    # Show only one in the legend
-                                 line=dict(dash='dot', color='grey')))
-        annotations.append(dict(x=np.log10(1000000), y=np.log10((1 - 1 / 2 ** (7 / i)) * 1000000),
-                                text=f'{i}-Day Doubling', showarrow=False,
-                                xshift=50, align='left'))
+        fig.update_traces(textposition='top center')
 
-    fig.update_layout(
-        annotations=annotations,
-        xaxis=dict(range=(2, np.log10(x_max)), type='log', autorange=False),
-        yaxis=dict(range=(1, np.log10(y_max)), type='log', autorange=False)
-    )
-    del df_fig
+        annotations = []
+        doubling_time = [2, 7, 21]
+        for i in doubling_time:
+            fig.add_trace(go.Scatter(x=[100, 1000000], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * 1000000],
+                                     name='n-Day Doubling Lines', mode='lines', hoverinfo='skip', legendgroup='Doubling Lines',
+                                     showlegend=True if i == 2 else False,    # Show only one in the legend
+                                     line=dict(dash='dot', color='grey')))
+            annotations.append(dict(x=np.log10(1000000), y=np.log10((1 - 1 / 2 ** (7 / i)) * 1000000),
+                                    text=f'{i}-Day Doubling', showarrow=False,
+                                    xshift=50, align='left'))
 
-    return fig
+        fig.update_layout(
+            annotations=annotations,
+            xaxis=dict(range=(2, np.log10(x_max)), type='log', autorange=False),
+            yaxis=dict(range=(1, np.log10(y_max)), type='log', autorange=False)
+        )
+        del df_fig
+
+        return fig
 
 
 if __name__ == '__main__':
