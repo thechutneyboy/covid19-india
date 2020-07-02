@@ -140,6 +140,10 @@ app = dash.Dash(
     meta_tags=[
         {'name': 'description',
          'content': 'An interactive visualisation to track the trajectory of COVID-19 outbreak in Indian States.'},
+        {'name': 'google-site-verification', 'content': '-izReqJEYR5RSnTSL_w4Tuguv7G_nZYxzfaY3_wLFAY'},
+        {'name': 'keywords',
+         'content': 'coronavirus, COVID-19, india covid, corona, covid trajectory, india states, covid growth, ' + \
+            'covid19, covid graph, covid chart, real time, interactive'},
         # Twitter Card Data
         {'name': 'twitter:card', 'content': 'summary_large_image'},
         {'name': 'twitter:title', 'content': 'India COVID-19 States Growth Trend'},
