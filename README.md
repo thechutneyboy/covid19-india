@@ -1,5 +1,7 @@
 # covid19-india
 
+![preview](https://github.com/thechutneyboy/covid19-india/blob/master/assets/preview_animation.gif?raw=True)
+
 This is a (yet another) [interactive visualisation](https://covid19indiapd.herokuapp.com/) to track the trajectory of COVID-19 cases in Indian States. It is particularly perceptive in comparing how different states are doing with respect to each other and themseleves across time.
 
 The growth rate (number of new cases) is plotted against the total number of confirmed cases. When both axes are plotted on a log scale, the n-day doubling line (exponential growth) becomes a straight line.
