@@ -265,11 +265,11 @@ def update_figure(n):
         annotations = []
         doubling_time = [2, 7, 21]
         for i in doubling_time:
-            fig.add_trace(go.Scatter(x=[100, 1000000], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * 1000000],
+            fig.add_trace(go.Scatter(x=[100, x_max/10], y=[(1 - 1 / 2 ** (7 / i)) * 100, (1 - 1 / 2 ** (7 / i)) * x_max/10],
                                      name='n-Day Doubling Lines', mode='lines', hoverinfo='skip', legendgroup='Doubling Lines',
                                      showlegend=True if i == 2 else False,    # Show only one in the legend
                                      line=dict(dash='dot', color='grey')))
-            annotations.append(dict(x=np.log10(1000000), y=np.log10((1 - 1 / 2 ** (7 / i)) * 1000000),
+            annotations.append(dict(x=np.log10(x_max/10), y=np.log10((1 - 1 / 2 ** (7 / i)) * x_max/10),
                                     text=f'{i}-Day Doubling', showarrow=False,
                                     xshift=50, align='left'))
 
