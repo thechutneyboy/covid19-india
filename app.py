@@ -64,7 +64,7 @@ STATE_GLOSSARY = {
 def prep_data():
     df = pd.read_json(path_or_buf=URL, orient=['records', 'index'])
     df = pd.DataFrame(df['states_daily'].tolist())
-    col_state = [c for c in df.columns if c not in ['date', 'status']]
+    col_state = [c for c in df.columns if c not in ['date', 'status', 'dateymd']]
     col_new_order = ['date', 'status'] + col_state
     df[col_state] = df[col_state].applymap(int)
     df = df[col_new_order]
