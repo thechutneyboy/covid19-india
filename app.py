@@ -90,7 +90,7 @@ def prep_data():
     df_plot['weekly_cases'] = df_plot.groupby(['state'])['cases'].apply(lambda x: x.rolling(7).sum())
     df_plot['active_cases'] = df_plot['total_cases'] - df_plot['total_resolved_cases']
     df_plot['state'] = df_plot['state'].map(lambda x: STATE_GLOSSARY[x])
-    df_plot['date_f'] = df_plot['date'].map(lambda x: dt.datetime.strptime(x, '%d-%b-%y'))
+    df_plot['date_f'] = df_plot['date'].str.replace('Sept', 'Sep').map(lambda x: dt.datetime.strptime(x, '%d-%b-%y'))
 
     """Filter for daily data for last 21 days and weekly data before that"""
     dates = df_plot['date_f'].unique()
